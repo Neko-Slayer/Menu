@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # ===========================================
-# Paymenter Auto Installer
+# Paymenter Fixed Installer
 # ===========================================
 # Made by NekoSlayer_
 # ===========================================
@@ -29,7 +29,7 @@ echo '  |_|   \___|_| |_| |_|\___| |_|___/\___|_| |_|'
 echo '                                              '
 echo -e "${NC}"
 echo -e "${PURPLE}═══════════════════════════════════════════════════════════════${NC}"
-echo -e "${WHITE}           💰 Paymenter Billing Panel Installer${NC}"
+echo -e "${WHITE}           💰 Paymenter Fixed Installer${NC}"
 echo -e "${PURPLE}═══════════════════════════════════════════════════════════════${NC}"
 echo -e "${YELLOW}                Made by NekoSlayer_${NC}"
 echo -e "${PURPLE}═══════════════════════════════════════════════════════════════${NC}\n"
@@ -44,7 +44,7 @@ fi
 # ===========================================
 # System Detection
 # ===========================================
-echo -e "${BLUE}[1/8] 🔍 Detecting system...${NC}"
+echo -e "${BLUE}[1/10] 🔍 Detecting system...${NC}"
 
 if [ -f /etc/os-release ]; then
     . /etc/os-release
@@ -67,7 +67,8 @@ if [ -f /etc/os-release ]; then
             echo -e "${YELLOW}[!] Debian $VERSION may not be officially supported${NC}"
         fi
     else
-        echo -e "${YELLOW}[!] OS may not be officially supported (Ubuntu 20.04+ / Debian 11+ recommended)${NC}"
+        echo -e "${RED}[✘] Paymenter requires Ubuntu/Debian${NC}"
+        exit 1
     fi
 fi
 echo ""
@@ -75,29 +76,29 @@ echo ""
 # ===========================================
 # Update System
 # ===========================================
-echo -e "${BLUE}[2/8] 📦 Updating system packages...${NC}"
+echo -e "${BLUE}[2/10] 📦 Updating system packages...${NC}"
 apt update -y && apt upgrade -y
 apt install -y curl wget git unzip tar software-properties-common
 echo -e "${GREEN}[✓] System updated${NC}\n"
 
 # ===========================================
-# Install PHP 8.1+
+# Install PHP 8.2
 # ===========================================
-echo -e "${BLUE}[3/8] 🐘 Installing PHP 8.1+...${NC}"
+echo -e "${BLUE}[3/10] 🐘 Installing PHP 8.2...${NC}"
 
 # Add PHP repository
 add-apt-repository -y ppa:ondrej/php
 apt update -y
 
 # Install PHP and extensions
-apt install -y php8.1 php8.1-cli php8.1-common php8.1-mysql php8.1-zip php8.1-gd php8.1-mbstring php8.1-curl php8.1-xml php8.1-bcmath php8.1-json php8.1-tokenizer php8.1-fpm
+apt install -y php8.2 php8.2-cli php8.2-common php8.2-mysql php8.2-zip php8.2-gd php8.2-mbstring php8.2-curl php8.2-xml php8.2-bcmath php8.2-fpm
 
-echo -e "${GREEN}[✓] PHP 8.1 installed${NC}\n"
+echo -e "${GREEN}[✓] PHP 8.2 installed${NC}\n"
 
 # ===========================================
 # Install Composer
 # ===========================================
-echo -e "${BLUE}[4/8] 📦 Installing Composer...${NC}"
+echo -e "${BLUE}[4/10] 📦 Installing Composer...${NC}"
 
 curl -sS https://getcomposer.org/installer | php
 mv composer.phar /usr/local/bin/composer
@@ -108,7 +109,7 @@ echo -e "${GREEN}[✓] Composer installed: $(composer --version | head -n 1)${NC
 # ===========================================
 # Install MySQL/MariaDB
 # ===========================================
-echo -e "${BLUE}[5/8] 🗄️  Installing MySQL/MariaDB...${NC}"
+echo -e "${BLUE}[5/10] 🗄️  Installing MariaDB...${NC}"
 
 apt install -y mariadb-server mariadb-client
 
@@ -121,14 +122,15 @@ echo -e "${GREEN}[✓] MariaDB installed${NC}\n"
 # ===========================================
 # Create Database
 # ===========================================
-echo -e "${BLUE}[6/8] 🔧 Configuring database...${NC}"
+echo -e "${BLUE}[6/10] 🔧 Configuring database...${NC}"
 echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 
 # Generate random password
 DB_PASSWORD=$(openssl rand -base64 16 | tr -d '=+/' | cut -c1-16)
 
-# Create database and user
+# Secure MariaDB installation
 mysql <<EOF
+ALTER USER 'root'@'localhost' IDENTIFIED BY '$DB_PASSWORD';
 CREATE DATABASE IF NOT EXISTS paymenter;
 CREATE USER IF NOT EXISTS 'paymenter'@'localhost' IDENTIFIED BY '$DB_PASSWORD';
 GRANT ALL PRIVILEGES ON paymenter.* TO 'paymenter'@'localhost';
@@ -139,32 +141,46 @@ echo -e "${GREEN}[✓] Database created${NC}"
 echo -e " ${WHITE}Database:${NC} paymenter"
 echo -e " ${WHITE}Username:${NC} paymenter"
 echo -e " ${WHITE}Password:${NC} ${CYAN}$DB_PASSWORD${NC}"
+echo -e " ${WHITE}Root Password:${NC} ${CYAN}$DB_PASSWORD${NC}"
 echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}\n"
 
+# Save credentials to file
+cat > /root/paymenter_credentials.txt << EOF
+PAYMENTER DATABASE CREDENTIALS
+===============================
+Database: paymenter
+Username: paymenter
+Password: $DB_PASSWORD
+Root Password: $DB_PASSWORD
+Installation Date: $(date)
+===============================
+EOF
+
+chmod 600 /root/paymenter_credentials.txt
+
 # ===========================================
-# Clone Paymenter Repository
+# Install Nginx
 # ===========================================
-echo -e "${BLUE}[7/8] 📥 Downloading Paymenter...${NC}"
+echo -e "${BLUE}[7/10] 🌐 Installing Nginx...${NC}"
+apt install -y nginx
+systemctl start nginx
+systemctl enable nginx
+echo -e "${GREEN}[✓] Nginx installed${NC}\n"
+
+# ===========================================
+# Download Paymenter
+# ===========================================
+echo -e "${BLUE}[8/10] 📥 Downloading Paymenter...${NC}"
 
 # Create web directory
 mkdir -p /var/www/paymenter
 cd /var/www
 
-# Clone repository [citation:1]
-git clone https://github.com/Poseidon281/Paymenter.git paymenter
+# Clone from official repository
+git clone https://github.com/paymenter/paymenter.git paymenter
 cd paymenter
 
-# Checkout latest stable version
-git checkout $(git describe --tags $(git rev-list --tags --max-count=1) 2>/dev/null || echo "main")
-
-echo -e "${GREEN}[✓] Paymenter downloaded${NC}\n"
-
-# ===========================================
-# Install Dependencies
-# ===========================================
-echo -e "${BLUE}[8/8] 📦 Installing PHP dependencies...${NC}"
-
-# Run composer install
+# Install dependencies
 composer install --no-dev --optimize-autoloader
 
 # Copy environment file
@@ -173,13 +189,23 @@ cp .env.example .env
 # Generate key
 php artisan key:generate
 
+echo -e "${GREEN}[✓] Paymenter downloaded${NC}\n"
+
+# ===========================================
+# Configure Paymenter
+# ===========================================
+echo -e "${BLUE}[9/10] ⚙️  Configuring Paymenter...${NC}"
+
+# Get domain
+read -p "Enter your domain or IP (e.g., https://paymenter.example.com or http://server-ip): " APP_URL
+
 # Configure database in .env
+sed -i "s/DB_CONNECTION=.*/DB_CONNECTION=mysql/" .env
+sed -i "s/# DB_HOST=.*/DB_HOST=127.0.0.1/" .env
+sed -i "s/# DB_PORT=.*/DB_PORT=3306/" .env
 sed -i "s/DB_DATABASE=.*/DB_DATABASE=paymenter/" .env
 sed -i "s/DB_USERNAME=.*/DB_USERNAME=paymenter/" .env
 sed -i "s/DB_PASSWORD=.*/DB_PASSWORD=$DB_PASSWORD/" .env
-
-# Set APP_URL
-read -p "Enter your domain or IP (e.g., https://billing.example.com or http://server-ip): " APP_URL
 sed -i "s|APP_URL=.*|APP_URL=$APP_URL|" .env
 
 # Run migrations
@@ -193,14 +219,12 @@ chown -R www-data:www-data /var/www/paymenter
 chmod -R 755 /var/www/paymenter/storage
 chmod -R 755 /var/www/paymenter/bootstrap/cache
 
-echo -e "${GREEN}[✓] Dependencies installed${NC}\n"
+echo -e "${GREEN}[✓] Paymenter configured${NC}\n"
 
 # ===========================================
-# Install Nginx
+# Configure Nginx
 # ===========================================
-echo -e "${BLUE}[+] Installing and configuring Nginx...${NC}"
-
-apt install -y nginx
+echo -e "${BLUE}[10/10] 🔧 Configuring Nginx...${NC}"
 
 # Create Nginx config
 cat > /etc/nginx/sites-available/paymenter << EOF
@@ -228,7 +252,7 @@ server {
     error_page 404 /index.php;
     
     location ~ \.php$ {
-        fastcgi_pass unix:/var/run/php/php8.1-fpm.sock;
+        fastcgi_pass unix:/var/run/php/php8.2-fpm.sock;
         fastcgi_param SCRIPT_FILENAME \$realpath_root\$fastcgi_script_name;
         include fastcgi_params;
     }
@@ -246,7 +270,6 @@ rm -f /etc/nginx/sites-enabled/default
 # Test and reload
 nginx -t
 systemctl restart nginx
-systemctl enable nginx
 
 echo -e "${GREEN}[✓] Nginx configured${NC}\n"
 
@@ -255,6 +278,8 @@ echo -e "${GREEN}[✓] Nginx configured${NC}\n"
 # ===========================================
 echo -e "${BLUE}[+] Creating admin user...${NC}"
 echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+
+cd /var/www/paymenter
 
 read -p "Enter admin email: " ADMIN_EMAIL
 read -p "Enter admin username: " ADMIN_USERNAME
@@ -268,8 +293,8 @@ if [[ "$ADMIN_PASSWORD" != "$ADMIN_PASSWORD_CONFIRM" ]]; then
     exit 1
 fi
 
-# Create user via artisan [citation:6]
-php artisan app:user:create --admin \
+# Create user via artisan
+php artisan user:create --admin \
     --email="$ADMIN_EMAIL" \
     --username="$ADMIN_USERNAME" \
     --password="$ADMIN_PASSWORD"
@@ -324,6 +349,7 @@ echo -e "${GREEN}[✓] Queue workers started${NC}\n"
 # Initialize Paymenter
 # ===========================================
 echo -e "${BLUE}[+] Running Paymenter initialization...${NC}"
+cd /var/www/paymenter
 php artisan app:init
 echo -e "${GREEN}[✓] Paymenter initialized${NC}\n"
 
@@ -356,6 +382,7 @@ echo -e " ${GREEN}•${NC} Admin Username: ${CYAN}$ADMIN_USERNAME${NC}"
 echo -e " ${GREEN}•${NC} Database Name: ${CYAN}paymenter${NC}"
 echo -e " ${GREEN}•${NC} Database User: ${CYAN}paymenter${NC}"
 echo -e " ${GREEN}•${NC} Database Password: ${CYAN}$DB_PASSWORD${NC}"
+echo -e " ${GREEN}•${NC} Credentials saved: ${CYAN}/root/paymenter_credentials.txt${NC}"
 echo -e "${WHITE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}\n"
 
 # Useful commands
@@ -364,13 +391,13 @@ echo -e "${WHITE}━━━━━━━━━━━━━━━━━━━━━
 echo -e " ${YELLOW}→${NC} Panel directory: ${CYAN}cd /var/www/paymenter${NC}"
 echo -e " ${YELLOW}→${NC} Queue status: ${CYAN}systemctl status paymenter-queue${NC}"
 echo -e " ${YELLOW}→${NC} Scheduler status: ${CYAN}systemctl status paymenter-scheduler${NC}"
-echo -e " ${YELLOW}→${NC} Create user: ${CYAN}php artisan app:user:create${NC}"
-echo -e " ${YELLOW}→${NC} List users: ${CYAN}php artisan app:user:list${NC}"
+echo -e " ${YELLOW}→${NC} Create user: ${CYAN}php artisan user:create${NC}"
+echo -e " ${YELLOW}→${NC} List users: ${CYAN}php artisan user:list${NC}"
 echo -e " ${YELLOW}→${NC} View logs: ${CYAN}tail -f /var/www/paymenter/storage/logs/*.log${NC}"
 echo -e " ${YELLOW}→${NC} Nginx logs: ${CYAN}tail -f /var/log/nginx/error.log${NC}"
 echo -e "${WHITE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}\n"
 
-# Features [citation:1]
+# Features
 echo -e "${GREEN}✨ PAYMENTER FEATURES:${NC}"
 echo -e "${WHITE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo -e " ${WHITE}•${NC} Free and open-source"
@@ -395,8 +422,8 @@ echo -e "${WHITE}━━━━━━━━━━━━━━━━━━━━━
 # Documentation
 echo -e "${GREEN}📚 DOCUMENTATION:${NC}"
 echo -e "${WHITE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-echo -e " ${CYAN}• GitHub: https://github.com/Poseidon281/Paymenter${NC}"
-echo -e " ${CYAN}• Demo: https://demo.paymenter.org${NC}"
+echo -e " ${CYAN}• GitHub: https://github.com/paymenter/paymenter${NC}"
+echo -e " ${CYAN}• Website: https://paymenter.org${NC}"
 echo -e " ${CYAN}• Discord: https://discord.gg/paymenter${NC}"
 echo -e "${WHITE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}\n"
 
