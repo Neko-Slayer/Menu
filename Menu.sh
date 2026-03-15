@@ -43,6 +43,7 @@ show_menu() {
     echo -e " ${CYAN}[3]${NC} ${WHITE}Cloudflare${NC}        - Install Cloudflare Tunnel (cloudflared)"
     echo -e " ${CYAN}[4]${NC} ${WHITE}System Info${NC}       - Display detailed system information"
     echo -e " ${CYAN}[5]${NC} ${WHITE}SSH + SFTP Fixer${NC}  - Secure SSH & install SpireCloud MOTD"
+    echo -e " ${CYAN}[6]${NC} ${WHITE}RDP Installer${NC}     - Install RDP on Linux/Windows"
     echo -e "${WHITE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
     echo -e " ${RED}[0]${NC} ${WHITE}Exit${NC}              - Close menu"
     echo -e "${WHITE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}\n"
@@ -83,6 +84,13 @@ run_ssh_fixer() {
     bash <(curl -fsSL https://raw.githubusercontent.com/Neko-Slayer/Sshfixer/main/Ssh.sh)
 }
 
+# Function to run RDP Installer
+run_rdp() {
+    echo -e "\n${BLUE}[+] Running RDP Installer...${NC}"
+    sleep 1
+    bash <(curl -fsSL https://raw.githubusercontent.com/Neko-Slayer/Menu/main/Rdp.sh)
+}
+
 # Check if running as root
 if [[ $EUID -ne 0 ]]; then
    echo -e "${RED}[✘] This script must be run as root!${NC}"
@@ -101,7 +109,7 @@ while true; do
     show_menu
     
     # Get user choice
-    read -p "Enter your choice [0-5]: " choice
+    read -p "Enter your choice [0-6]: " choice
     
     case $choice in
         1)
@@ -119,12 +127,15 @@ while true; do
         5)
             run_ssh_fixer
             ;;
+        6)
+            run_rdp
+            ;;
         0)
             echo -e "\n${GREEN}👋 Goodbye! Thanks for using Neko Ultimate Menu!${NC}\n"
             exit 0
             ;;
         *)
-            echo -e "\n${RED}[✘] Invalid choice! Please enter 0-5${NC}"
+            echo -e "\n${RED}[✘] Invalid choice! Please enter 0-6${NC}"
             sleep 2
             ;;
     esac
