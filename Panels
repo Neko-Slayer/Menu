@@ -57,7 +57,7 @@ install_feather() {
 # Function to run Pterodactyl installer
 install_ptero() {
     echo -e "\n${BLUE}[+] Running Pterodactyl installer...${NC}"
-    sudo bash <(curl -sSL https://raw.githubusercontent.com/Neko-Slayer/Menu/main/Pteromenu.sh)
+    bash <(curl -sSL https://raw.githubusercontent.com/Neko-Slayer/Menu/main/Pteromenu.sh)
 }
 
 # Function to run Paymenter installer
