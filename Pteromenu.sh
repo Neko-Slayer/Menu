@@ -47,18 +47,18 @@ read choice
 case $choice in
     1)
         echo -e "\n${GREEN}🚀 Installing Pterodactyl Panel...${NC}\n"
-        sudo bash <(curl -sSL https://raw.githubusercontent.com/Neko-Slayer/Menu/main/Ptero.sh)
+         bash <(curl -sSL https://raw.githubusercontent.com/Neko-Slayer/Menu/main/Ptero.sh)
         ;;
     2)
         echo -e "\n${GREEN}🕊️ Installing Pterodactyl Wings...${NC}\n"
-        sudo bash <(curl -sSL https://raw.githubusercontent.com/Neko-Slayer/Menu/main/Wing.sh)
+         bash <(curl -sSL https://raw.githubusercontent.com/Neko-Slayer/Menu/main/Wing.sh)
         ;;
     3)
         echo -e "\n${RED}⚠️  WARNING: This will completely remove Pterodactyl!${NC}"
         echo -ne "${YELLOW}💀 Are you sure? (y/N): ${NC}"
         read confirm
         if [[ "$confirm" =~ ^[Yy]$ ]]; then
-            sudo bash <(curl -sSL https://raw.githubusercontent.com/Neko-Slayer/Menu/main/Pterouni.sh)
+             bash <(curl -sSL https://raw.githubusercontent.com/Neko-Slayer/Menu/main/Pterouni.sh)
         else
             echo -e "${GREEN}Cancelled.${NC}"
         fi
